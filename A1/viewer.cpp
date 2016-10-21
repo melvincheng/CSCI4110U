@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include "Shaders.h"
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
@@ -21,19 +21,18 @@ glm::mat4 projection;
 
 GLuint objVAO;
 int triangles;
+int ni;
 
 void init() {
     GLuint vbuffer;
     GLuint ibuffer;
     GLint vPosition;
     GLint vNormal;
-    GLfloat *vertices;
+    // GLfloat *vertices;
     GLfloat *normals;
     GLuint *indices;
     int nv;
     int nn;
-    int ni;
-    int i;
 
     glGenVertexArrays(1, &objVAO);
     glBindVertexArray(objVAO);
@@ -43,21 +42,43 @@ void init() {
     std::ifstream file;
     file.open("terrainInfo.txt");
     file >> x;
-    file >> y
+    file >> y;
     printf("%u %u\n", x, y);
 
+    nv = x * y;
+    glm::vec3(*vertices) = new glm::vec3[nv];
+
+    for (int i = 0; i < x; i++) {
+        for (int j = 0; j < y; i++) {
+            vertices[y*i+j].x = i;
+            vertices[y*i+j].y = j;
+            vertices[y*i+j].z = 0;
+
+        }
+    }
+
+    ni = x * y;
+    indices = new GLuint[ni];
+    for (int i = 0; i < 0; i++) {
+        indices[i] = i;
+    }
 
 
 
-    // glGenBuffers(1, &vbuffer);
-    // glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-    // glBufferData(GL_ARRAY_BUFFER, (nv /*+ nn*/)*sizeof(GLfloat), NULL, GL_STATIC_DRAW);
-    // glBufferSubData(GL_ARRAY_BUFFER, 0, nv*sizeof(GLfloat), vertices);
+    glGenBuffers(1, &vbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
+    glBufferData(GL_ARRAY_BUFFER, (nv /*+ nn*/)*sizeof(glm::vec3), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nv*sizeof(glm::vec3), vertices);
     // glBufferSubData(GL_ARRAY_BUFFER, nv*sizeof(GLfloat), nn*sizeof(GLfloat), normals);
-    // glUseProgram(program);
-    // vPosition = glGetAttribLocation(program, "vPosition");
-    // glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    // glEnableVertexAttribArray(vPosition);
+
+    glGenBuffers(1, &ibuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*ni, indices, GL_STATIC_DRAW);
+
+    glUseProgram(program);
+    vPosition = glGetAttribLocation(program, "vPosition");
+    glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(vPosition);
     // vNormal = glGetAttribLocation(program, "vNormal");
     // glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)(nv*sizeof(*vertices)));
     // glEnableVertexAttribArray(vNormal);
@@ -109,7 +130,7 @@ void displayFunc(void) {
     glUniform4f(materialLoc, 0.3, 0.7, 0.7, 150.0);
     
     glBindVertexArray(objVAO);
-    glDrawElements(GL_TRIANGLES, 3*triangles, GL_UNSIGNED_INT, NULL);
+    glDrawElements(GL_POINTS, ni, GL_UNSIGNED_INT, NULL);
 
     glutSwapBuffers();
 }
@@ -179,12 +200,12 @@ int main(int argc, char **argv) {
     glEnable(GL_DEPTH_TEST);
     glClearColor(1.0, 1.0, 1.0, 1.0);
 
-    // sprintf(vertexName, "lab5%s.vs", vertex);
-    // vs = buildShader(GL_VERTEX_SHADER, vertexName);
-    // sprintf(fragmentName, "lab5%s.fs", fragment);
-    // fs = buildShader(GL_FRAGMENT_SHADER, fragmentName);
-    // program = buildProgram(vs, fs, 0);
-    // dumpProgram(program, "Lab 2 shader program");
+    
+    vs = buildShader(GL_VERTEX_SHADER, "lab4a.vs");
+    
+    fs = buildShader(GL_FRAGMENT_SHADER, "lab4a.fs");
+    program = buildProgram(vs, fs, 0);
+    dumpProgram(program, "A1 shader program");
     init();
 
     eyex = 0.0;

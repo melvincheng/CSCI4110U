@@ -1,3 +1,5 @@
+#define GLM_FORCE_RADIANS
+
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <GL/freeglut_ext.h>
@@ -8,6 +10,10 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <random>
+
+#include <stdlib.h>
+#include <time.h>
     
 
 float eyex, eyey, eyez;
@@ -26,9 +32,9 @@ void init() {
     GLuint vbuffer;
     GLuint ibuffer;
     GLint vPosition;
-    GLint vNormal
-;    // GLfloat *vertices;
-    GLfloat *normals;
+    GLint vNormal;
+    // GLfloat *vertices;
+    // GLfloat *normals;
     GLuint *indices;
     uint nn;
     uint ni;
@@ -44,68 +50,112 @@ void init() {
     file >> x;
     file >> y;
     printf("%u %u\n", x, y);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     nv = (x + 1) * (y + 1);
     glm::vec3(*vertices) = new glm::vec3[nv];
-
-    for (uint i = 0; i <= y; i++) {
-        for (uint j = 0; j <= x; j++) {
-            vertices[(x+1)*i+j].x = float(j);
-            vertices[(x+1)*i+j].y = float(i);
-            vertices[(x+1)*i+j].z = float(0.0);
-            printf("%i\n",(x+1)*i+j);
-            printf("%f %f %f\n", float(i),float(j),float(0.0));
+    int randomNum;
+    srand (time(NULL));
+    for (int i = 0; i <= y; i++) {
+       for (int j = 0; j <= x; j++) {
+            randomNum = rand() % 10 - 10;
+            printf("%d\n", randomNum);
+            vertices[(x+1)*i+j] = glm::vec3(j,i,randomNum);
         }
+    }
+
+    for (int i = 0; i < nv; i++) {
+        printf("%f %f %f\n", vertices[i].x,vertices[i].y,vertices[i].z);
     }
 
     ni = (x) * (y) * 2 * 3;
-    indices = new GLuint[ni];
-    int run = 0;
-    for (uint i = 0; i < y; i++) {
-        for (uint j = 0; j < x; j++) {
-            indices[(i*(x-1) + j)*6] = i*(x+1) + j;
-            indices[(i*(x-1) + j)*6 + 1] = i*(x+1) + j + x+1 + 1;
-            indices[(i*(x-1) + j)*6 + 2] = i*(x+1) + j + 1;
+    indices = new GLuint[ni]; 
+    // printf("%s\n", "begin");
 
-            printf("%u %u %u \n", i*(x+1) + j,i*(x+1) + j + x+1 + 1,i*(x+1) + j + 1);
+    int k = 0;
+    int l = 0;
+    for (int i = 0; i < y; i++) {
+        for (int j = 0; j < x; j++) { 
+            indices[l++] = x*i + j + k;
+            indices[l++] = x*i + j + x+1 + 1 + k;
+            indices[l++] = x*i + j + 1 + k;
+        
+            indices[l++] = x*i + j + k;
+            indices[l++] = x*i + j + x+1 + k;
+            indices[l++] = x*i + j + x+1 + 1 + k;
+
+            // printf("%u %u %u\n", 
+            //     x*i + j + k,
+            //     x*i + j + x + 1 + k,
+            //     x*i + j + 1 + k);
+            triangles+=2;
+        }
+        k++;
+    }
 
 
-            indices[(i*(x-1) + j)*6 + 3] = i*(x+1) + j;
-            indices[(i*(x-1) + j)*6 + 4] = j + (i+1)*(x+1);
-            indices[(i*(x-1) + j)*6 + 5] = j + (i+1)*(x+1) + 1;
-            printf("%u %u %u \n\n", i*(x+1) + j,j + (i+1)*(x+1),j + (i+1)*(x+1) + 1);
-            triangles += 2;
+    glm::vec3 (*facenormals) = new glm::vec3[triangles];
+
+    GLuint temp1, temp2, temp3;
+    glm::vec3 tempvec1, tempvec2, finalvec;
+
+    for (int i = 0; i < triangles; i++){
+        temp1 = indices[i * 3 + 0];
+        temp2 = indices[i * 3 + 1];
+        temp3 = indices[i * 3 + 2];
+        tempvec1 = glm::vec3(
+            vertices[temp1].x - vertices[temp3].x,
+            vertices[temp1].y - vertices[temp3].y,
+            vertices[temp1].z - vertices[temp3].z);
+        tempvec2 = glm::vec3(
+            vertices[temp2].x - vertices[temp3].x,
+            vertices[temp2].y - vertices[temp3].y,
+            vertices[temp2].z - vertices[temp3].z);
+        finalvec = glm::cross(tempvec2, tempvec1);
+        facenormals[i].x = finalvec.x;
+        facenormals[i].y = finalvec.y;
+        facenormals[i].z = finalvec.z;
+    }
+
+    GLfloat(*verNormals)[4] = new GLfloat[nv][4];
+    int tempCount;
+
+    for (int i = 0; i < nv; i++){
+    for (int j = 0; j < 4; j++){
+            verNormals[i][j] = 0.0;
         }
     }
-    printf("%u\n", nv);
-    printf("%d\n", triangles);
-    printf("%u\n", ni);
 
-    // inc = 0;
-    // for (uint i = ni/2; i < ni; i += 3) {
-    //     if (inc%(x - 1) == 0 && inc != 0) {
-    //         inc++;
-    //     } 
-    //     indices[i] = inc;
-    //     indices[i + 1] = inc + x;
-    //     indices[i + 2] = inc + x + 1;
-    //     inc++;
-    // }
-
-    for (int i = 0; i < 126; i+=3) {
-        
-        printf("%f %f %f\n",vertices[indices[i]].x,vertices[indices[i]].y,vertices[indices[i]].z);
-        printf("%f %f %f\n",vertices[indices[i+1]].x,vertices[indices[i+1]].y,vertices[indices[i+1]].z);
-        printf("%f %f %f\n",vertices[indices[i+2]].x,vertices[indices[i+2]].y,vertices[indices[i+2]].z);
-        printf("%d\n",i);
+    for (int i = 0; i < triangles; i++){
+        for (int j = 0; j < 3; j++){
+            verNormals[indices[i * 3 + j]][3]++;
+            for (int k = 0; k < 3; k++){
+                verNormals[indices[i * 3 + j]][k] = verNormals[indices[i * 3 + j]][k] + facenormals[i][k];
+            }
+        }
     }
+
+    glm::vec3(*normals) = new glm::vec3[nv];
+    for (int i = 0; i < nv; i++){
+        for (int j = 0; j < 3; j++){
+            normals[i][j] = verNormals[i][j] / verNormals[i][3];
+        }
+    }
+
+    // printf("%u\n", nv);
+    // printf("%d\n", triangles);
+    // printf("%u\n", ni);
+
+    // for (int i = 0; i < triangles*3; i++) {
+    //     printf("%d \n",indices[i]);
+    //     printf("%f %f %f\n", vertices[indices[i]].x,vertices[indices[i]].y,vertices[indices[i]].z);
+    // }
 
 
     glGenBuffers(1, &vbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-    glBufferData(GL_ARRAY_BUFFER, (nv /*+ nn*/)*sizeof(glm::vec3), vertices, GL_STATIC_DRAW);
-    // glBufferSubData(GL_ARRAY_BUFFER, 0, nv*sizeof(glm::vec3), vertices);
-    // glBufferSubData(GL_ARRAY_BUFFER, nv*sizeof(GLfloat), nn*sizeof(GLfloat), normals);
+    glBufferData(GL_ARRAY_BUFFER, (nv)*sizeof(glm::vec3)*2, NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nv*sizeof(glm::vec3), vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, nv*sizeof(glm::vec3), nv*sizeof(glm::vec3), normals);
 
     glGenBuffers(1, &ibuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
@@ -115,9 +165,9 @@ void init() {
     vPosition = glGetAttribLocation(program, "vPosition");
     glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(vPosition);
-    // vNormal = glGetAttribLocation(program, "vNormal");
-    // glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)(nv*sizeof(*vertices)));
-    // glEnableVertexAttribArray(vNormal);
+    vNormal = glGetAttribLocation(program, "vNormal");
+    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)(nv*sizeof(*vertices)));
+    glEnableVertexAttribArray(vNormal);
 }
 
 
@@ -166,8 +216,8 @@ void displayFunc(void) {
     glUniform4f(materialLoc, 0.3, 0.7, 0.7, 150.0);
     
     glBindVertexArray(objVAO);
-    glDrawElements(GL_TRIANGLES, triangles*4, GL_UNSIGNED_INT, NULL);
-    // glPointSize(3);
+    glDrawElements(GL_TRIANGLES, triangles * 3, GL_UNSIGNED_INT, NULL);
+    glPointSize(3);
 
     glutSwapBuffers();
 }

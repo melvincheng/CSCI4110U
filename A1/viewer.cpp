@@ -1,16 +1,18 @@
-#define GLM_FORCE_RADIANS
+// #define GLM_FORCE_RADIANS
 
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <GL/freeglut_ext.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Shaders.h"
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <random>
+#include <math.h>
 
 #include <stdlib.h>
 #include <time.h>
@@ -27,6 +29,9 @@ glm::mat4 projection;
 
 GLuint objVAO;
 int triangles = 0;
+glm::vec3 direction = glm::vec3(1.0f, 1.0f, 0.0f);
+glm::vec3 up = glm::vec3(0.0f, 0.0f, 1.0f);
+glm::vec3 eye = glm::vec3(02.5f, 02.5f, 1.0f);
 
 void init() {
     GLuint vbuffer;
@@ -44,28 +49,65 @@ void init() {
     glBindVertexArray(objVAO);
 
     uint x;
-    uint y;
+    uint y; 
+    uint numx;
+    uint numy;
+    uint incx;
+    uint incy;
     std::ifstream file;
     file.open("terrainInfo.txt");
     file >> x;
     file >> y;
+    file >> numx;
+    file >> numy;
     printf("%u %u\n", x, y);
+    printf("%d %d\n", numx,numy);
+    if(numx == 2) {
+        incx = x;
+    }else{
+        incx = round(float(x+1)/float(numx));
+    }
+
+    if(numy == 2) {
+        incy = y;
+    }else{
+        incy = round(float(y+1)/float(numy));
+        // printf("%\n");
+        std::cout<<round(float(y/numy))<<std::endl;
+    }
+    printf("%i %i\n", incx, incy);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     nv = (x + 1) * (y + 1);
     glm::vec3(*vertices) = new glm::vec3[nv];
     int randomNum;
+    float height;
+    bool heightinc = true;
     srand (time(NULL));
     for (int i = 0; i <= y; i++) {
-       for (int j = 0; j <= x; j++) {
-            randomNum = rand() % 10 - 10;
-            printf("%d\n", randomNum);
-            vertices[(x+1)*i+j] = glm::vec3(j,i,randomNum);
+        height = 0.0;
+        if(i%incy == 0){
+            heightinc = true;
+        }else{
+            heightinc = false;
+        }
+        for (int j = 0; j <= x; j++) {
+            if(heightinc){
+                if(j%incx == 0){
+                    file >> height;
+                    // printf("%f\n",2/3);
+                    printf("%d %d %f\n", i, j, height);
+                }else{
+                    height = 0.0;
+                }
+            }
+            // randomNum = rand() % 10;
+            vertices[(x+1)*i+j] = glm::vec3(j,i,height);
         }
     }
 
-    for (int i = 0; i < nv; i++) {
-        printf("%f %f %f\n", vertices[i].x,vertices[i].y,vertices[i].z);
-    }
+    // for (int i = 0; i < nv; i++) {
+    //     printf("%f %f %f\n", vertices[i].x,vertices[i].y,vertices[i].z);
+    // }
 
     ni = (x) * (y) * 2 * 3;
     indices = new GLuint[ni]; 
@@ -183,7 +225,7 @@ void changeSize(int w, int h) {
 
     glViewport(0, 0, w, h);
 
-    projection = glm::perspective(45.0f, ratio, 1.0f, 100.0f);
+    projection = glm::perspective(45.0f, ratio, 1.0f, 10000.0f);
 
 }
 
@@ -199,7 +241,7 @@ void displayFunc(void) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(program);
 
-    view = glm::lookAt(glm::vec3(eyex, eyey, eyez), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    view = glm::lookAt(eye, eye + direction, up);
 
     viewLoc = glGetUniformLocation(program, "modelView");
     glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
@@ -218,7 +260,6 @@ void displayFunc(void) {
     glBindVertexArray(objVAO);
     glDrawElements(GL_TRIANGLES, triangles * 3, GL_UNSIGNED_INT, NULL);
     glPointSize(3);
-
     glutSwapBuffers();
 }
 
@@ -226,23 +267,43 @@ void keyboardFunc(unsigned char key, int x, int y) {
 
     switch (key) {
     case 'a':
-        phi -= 0.1;
+        direction = glm::mat3(glm::rotate(1.0f,up)) * direction;
         break;
     case 'd':
-        phi += 0.1;
+        direction = glm::mat3(glm::rotate(-1.0f,up)) * direction;
         break;
     case 'w':
-        theta += 0.1;
+        direction = glm::mat3(glm::rotate(1.0f,glm::cross(up,direction))) * direction;
         break;
     case 's':
-        theta -= 0.1;
+        direction = glm::mat3(glm::rotate(-1.0f,glm::cross(up,direction))) * direction;
+        break;
+    case 'e':
+        eye += 0.1f * glm::cross(direction, up);
+        break;
+    case 'q':
+        eye -= 0.1f * glm::cross(direction, up);
+        break;
+    case 'r':
+        eye += 0.1f * up;
+        break;
+    case 'f':
+        eye -= 0.1f * up;
+        break;
+    case 'x':
+        eye += 0.1f * direction;
+        break;
+    case 'c':
+        eye -= 0.1f * direction;
         break;
     }
 
-    eyex = r*sin(theta)*cos(phi);
-    eyey = r*sin(theta)*sin(phi);
-    eyez = r*cos(theta);
-    printf("%f %f %f \n", eyex, eyey, eyez);
+    printf("%s %f %f %f\n", "Eye:",eye.x,eye.y,eye.z);
+    printf("%s %f %f %f\n", "Direction",direction.x,direction.y,direction.z);
+    printf("%s %f %f %f\n", "up",up.x,up.y,up.z);
+    // eyex = r*sin(theta)*cos(phi);
+    // eyey = r*sin(theta)*sin(phi);
+    // eyez = r*cos(theta);
 
     glutPostRedisplay();
 
@@ -294,14 +355,6 @@ int main(int argc, char **argv) {
     program = buildProgram(vs, fs, 0);
     dumpProgram(program, "A1 shader program");
     init();
-
-    eyex = 0.0;
-    eyez = -10.0;
-    eyey = 0.0;
-
-    theta = 1.5;
-    phi = 1.5;
-    r = 15.0;
 
     glutMainLoop();
 

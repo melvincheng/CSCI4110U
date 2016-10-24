@@ -19,20 +19,91 @@
     
 
 float eyex, eyey, eyez;
-
+std::normal_distribution<float> distribution(0.0,1.0);
+std::default_random_engine generator;
 double theta, phi;
 double r;
-
+bool wireframe = false;
 GLuint program; 
-
+float H;
+uint x;
+uint y;
+uint nv;
 glm::mat4 projection;
-
 GLuint objVAO;
 int triangles = 0;
-glm::vec3 direction = glm::vec3(1.0f, 1.0f, 0.0f);
+glm::vec3 direction = glm::vec3(1.0f, 1.0f, -0.50f);
 glm::vec3 up = glm::vec3(0.0f, 0.0f, 1.0f);
-glm::vec3 eye = glm::vec3(02.5f, 02.5f, 1.0f);
+glm::vec3 eye = glm::vec3(0.0f, 0.0f, 100.0f);
 
+void diamond(glm::vec3 (*vertices), uint p1, uint p2, uint p3, uint p4) {
+    // printf("%d %d %d %d\n", p1, p2, p3, p4);
+    float mean = (vertices[p1].z + vertices[p2].z + vertices[p3].z + vertices[p4].z) / 4;
+
+    float val = distribution(generator);
+
+    uint middle = (p4 + p1) / 2;
+
+    vertices[middle].z = mean + 2*val*H - H;
+}
+void square(glm::vec3 (*vertices), uint p1, uint p2, uint p3, uint p4) {
+    // printf("%f %f %f %f\n", vertices[p1].z, vertices[p2].z, vertices[p3].z, vertices[p4].z);
+    float mean;
+
+    int outPoint;
+
+    float val;
+
+    uint middle = (p4 + p1) / 2;
+
+    bool rightEdge = false;
+    bool leftEdge = false;
+
+    if ((((p2 + p4) / 2) + 1) % (x + 1) == 0){
+        rightEdge = true;
+    }
+    if (((p1 + p3) / 2) % (x + 1) == 0){
+        leftEdge = true;
+    }
+
+    outPoint = ((p2 + p1) / 2) - (x + 1);
+    if (outPoint < 0) {
+        mean = (vertices[p1].z + vertices[p2].z + vertices[middle].z) / 3;
+        
+    } else {
+        mean = (vertices[p1].z + vertices[p2].z + vertices[middle].z + vertices[outPoint].z) / 4;
+    }
+    val = distribution(generator);
+    vertices[(p2 + p1) / 2].z = mean + 2*val*H - H;
+
+
+    outPoint = ((p1 + p3) / 2) - (middle - ((p1 + p3) / 2));
+    if (leftEdge){
+        mean = (vertices[p1].z + vertices[p3].z + vertices[middle].z) / 3;
+    } else {
+        mean = (vertices[p1].z + vertices[p3].z + vertices[middle].z + vertices[outPoint].z) / 4;
+    }
+    val = distribution(generator);
+    vertices[(p3 + p1) / 2].z = mean + 2*val*H - H;
+
+    outPoint = ((p2 + p4) / 2) + (((p2 + p4) / 2) - middle);
+    if (rightEdge){
+        mean = (vertices[p2].z + vertices[p4].z + vertices[middle].z) / 3;
+    } else {
+        mean = (vertices[p1].z + vertices[p4].z + vertices[middle].z + vertices[outPoint].z) / 4;
+    }
+    val = distribution(generator);
+    vertices[(p4 + p2) / 2].z = mean + 2*val*H - H;
+
+    outPoint = ((p3 + p4) / 2) + (x + 1);
+    if (outPoint > nv) {
+        mean = (vertices[p3].z + vertices[p4].z + vertices[middle].z) / 3;
+    } else {
+        mean = (vertices[p3].z + vertices[p4].z + vertices[middle].z + vertices[outPoint].z) / 4;
+    }
+    val = distribution(generator);
+    vertices[(p4 + p3) / 2].z = mean + 2*val*H - H;
+}
 void init() {
     GLuint vbuffer;
     GLuint ibuffer;
@@ -41,15 +112,11 @@ void init() {
     // GLfloat *vertices;
     // GLfloat *normals;
     GLuint *indices;
-    uint nn;
     uint ni;
-    uint nv;
 
     glGenVertexArrays(1, &objVAO);
     glBindVertexArray(objVAO);
-
-    uint x;
-    uint y; 
+ 
     uint numx;
     uint numy;
     uint incx;
@@ -60,29 +127,34 @@ void init() {
     file >> y;
     file >> numx;
     file >> numy;
-    printf("%u %u\n", x, y);
-    printf("%d %d\n", numx,numy);
+    file >> H;
+    uint *seeds = new uint[numx * numy];
+    uint seednum = 0;
+    // printf("%u %u\n", x, y);
+    // printf("%d %d\n", numx,numy);
+
     if(numx == 2) {
         incx = x;
     }else{
-        incx = round(float(x+1)/float(numx));
+        incx = floor(float(x+1)/float(numx - 1));
     }
 
     if(numy == 2) {
         incy = y;
     }else{
-        incy = round(float(y+1)/float(numy));
+        incy = floor(float(y+1)/float(numy - 1));
         // printf("%\n");
-        std::cout<<round(float(y/numy))<<std::endl;
+        // std::cout<<round(float(y/numy))<<std::endl;
     }
-    printf("%i %i\n", incx, incy);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // printf("%i %i\n", incx, incy);
+
     nv = (x + 1) * (y + 1);
     glm::vec3(*vertices) = new glm::vec3[nv];
-    int randomNum;
+    
     float height;
     bool heightinc = true;
-    srand (time(NULL));
+    
     for (int i = 0; i <= y; i++) {
         height = 0.0;
         if(i%incy == 0){
@@ -94,8 +166,12 @@ void init() {
             if(heightinc){
                 if(j%incx == 0){
                     file >> height;
+                    // while(height > 10) {
+                    //     height = height/10;
+                    // }
                     // printf("%f\n",2/3);
-                    printf("%d %d %f\n", i, j, height);
+                    seeds[seednum++] = (x+1)*i+j;
+                    // printf("%d %d %f\n", i/100, j/100, height);
                 }else{
                     height = 0.0;
                 }
@@ -104,6 +180,35 @@ void init() {
             vertices[(x+1)*i+j] = glm::vec3(j,i,height);
         }
     }
+
+
+    while(incx > 1 && incy > 1){
+        for (int j = 0; j < y - 1; j += incy) {
+            for (int i = 0; i < x - 1; i += incx) {
+                diamond(vertices, j*(y+1) + i, j*(y+1) + i+incx, (j*(y+1))+(y+1)*incy + i, (j*(y+1))+(y+1)*incy + i+incx);
+            }
+        }
+        for (int j = 0; j < y - 1; j += incy) {
+            for (int i = 0; i < x - 1; i += incx) {
+                square(vertices, j*(y+1) + i, j*(y+1) + i+incx, (j*(y+1))+(y+1)*incy + i, (j*(y+1))+(y+1)*incy + i+incx);
+            }
+        }
+        H /= 2;
+        incx /= 2;
+        incy /= 2;
+    }
+
+    // for (int j = 0; j < numy-1; j++) {
+    //     for (int i = 0; i < numx-1; i++) {
+    //         diamond(vertices, seeds[j*numy + i], seeds[j*numy + i+1], seeds[(j*numy)+numy + i], seeds[(j*numy)+numy + i+1]);
+    //     }
+    // }
+
+    // for (int j = 0; j < numy-1; j++) {
+    //     for (int i = 0; i < numx-1; i++) {
+    //         square(vertices, seeds[j*numy + i], seeds[j*numy + i+1], seeds[(j*numy)+numy + i], seeds[(j*numy)+numy + i+1]);
+    //     }
+    // }
 
     // for (int i = 0; i < nv; i++) {
     //     printf("%f %f %f\n", vertices[i].x,vertices[i].y,vertices[i].z);
@@ -159,7 +264,6 @@ void init() {
     }
 
     GLfloat(*verNormals)[4] = new GLfloat[nv][4];
-    int tempCount;
 
     for (int i = 0; i < nv; i++){
     for (int j = 0; j < 4; j++){
@@ -212,7 +316,6 @@ void init() {
     glEnableVertexAttribArray(vNormal);
 }
 
-
 void changeSize(int w, int h) {
 
     // Prevent a divide by zero, when window is too short
@@ -238,6 +341,12 @@ void displayFunc(void) {
     int lightLoc;
     int materialLoc;
 
+    if (wireframe){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(program);
 
@@ -249,7 +358,7 @@ void displayFunc(void) {
     glUniformMatrix4fv(projLoc, 1, 0, glm::value_ptr(projection));
 
     colourLoc = glGetUniformLocation(program, "colour");
-    glUniform4f(colourLoc, 1.0, 0.0, 0.0, 1.0);
+    glUniform4f(colourLoc, 0.0, 1.0, 0.0, 1.0);
     eyeLoc = glGetUniformLocation(program, "Eye");
     glUniform3f(eyeLoc, eyex, eyey, eyez);
     lightLoc = glGetUniformLocation(program, "light");
@@ -279,28 +388,36 @@ void keyboardFunc(unsigned char key, int x, int y) {
         direction = glm::mat3(glm::rotate(-1.0f,glm::cross(up,direction))) * direction;
         break;
     case 'e':
-        eye += 0.1f * glm::cross(direction, up);
+        eye += 1.0f * glm::cross(direction, up);
         break;
     case 'q':
-        eye -= 0.1f * glm::cross(direction, up);
+        eye -= 1.0f * glm::cross(direction, up);
         break;
     case 'r':
-        eye += 0.1f * up;
+        eye += 1.0f * up;
         break;
     case 'f':
-        eye -= 0.1f * up;
+        eye -= 1.0f * up;
         break;
     case 'x':
-        eye += 0.1f * direction;
+        eye += 1.0f * direction;
         break;
     case 'c':
-        eye -= 0.1f * direction;
+        eye -= 1.0f * direction;
+        break;
+    case 'p':
+        if(wireframe) {
+            wireframe = false;
+        }else{
+            wireframe = true;
+        }
         break;
     }
 
-    printf("%s %f %f %f\n", "Eye:",eye.x,eye.y,eye.z);
-    printf("%s %f %f %f\n", "Direction",direction.x,direction.y,direction.z);
-    printf("%s %f %f %f\n", "up",up.x,up.y,up.z);
+
+    // printf("%s %f %f %f\n", "Eye:",eye.x,eye.y,eye.z);
+    // printf("%s %f %f %f\n", "Direction",direction.x,direction.y,direction.z);
+    // printf("%s %f %f %f\n", "up",up.x,up.y,up.z);
     // eyex = r*sin(theta)*cos(phi);
     // eyey = r*sin(theta)*sin(phi);
     // eyez = r*cos(theta);
@@ -312,12 +429,6 @@ void keyboardFunc(unsigned char key, int x, int y) {
 int main(int argc, char **argv) {
     int fs;
     int vs;
-    int user;
-
-    char vertexName[256];
-    char fragmentName[256];
-    char *fragment;
-    char *vertex;
 
     glutInit(&argc, argv);
     glutInitContextVersion(3, 3);
@@ -346,12 +457,12 @@ int main(int argc, char **argv) {
     glutKeyboardFunc(keyboardFunc);
 
     glEnable(GL_DEPTH_TEST);
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(0.53, 0.81, 0.98, 1.0);
 
     
-    vs = buildShader(GL_VERTEX_SHADER, "lab4a.vs");
+    vs = buildShader(GL_VERTEX_SHADER, "a1.vs");
     
-    fs = buildShader(GL_FRAGMENT_SHADER, "lab4a.fs");
+    fs = buildShader(GL_FRAGMENT_SHADER, "a1.fs");
     program = buildProgram(vs, fs, 0);
     dumpProgram(program, "A1 shader program");
     init();

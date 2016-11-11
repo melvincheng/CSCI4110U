@@ -13,19 +13,12 @@ void main(){
 	vec3 tc;
 
 	vec3 L = normalize(light - position);
-	vec3 N;
-	N = normalize(normal);
+	vec3 N = normalize(normal);
+	
+	float n1 = 1.52f;
+	float n2 = 1.0f;
 
-	float co = 0.66f;
-	float FO = pow(((1 - 1.52)/(1 + 1.52)),2);
-	float SA = FO + (1 - FO)*pow((1 - dot(-position,N)),5);
-
-
-
-	//tc = refract(normalize(position), normalize(normal), co);
-	//tc = reflect(-position, normal);
-	gl_FragColor = texture(tex, tc);
-
+	float eta = n1/n2;
 
 
 	vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
@@ -44,11 +37,17 @@ void main(){
 	} else {
 		specular = pow(max(0.0, dot(N,R)), material.w);
 	}
-	vec3 refractColour = refract(-position, N, co) * (1.0f - SA);
-	vec3 reflectColour = reflect(-position, N) * SA;
-	tc = reflectColour + refractColour;
-	colour = texture(tex,tc);
 
-	gl_FragColor = min(material.x * colour + material.y * diffuse * colour + material.z * white * specular, vec4(1.0));
+	vec3 reflectColour = reflect(normalize(position-Eye), N);
+	vec3 refractColour = refract(normalize(position-Eye), N, eta);
+
+	float Fo = pow(((n1 - n2)/(n1 + n2)),2.0f);
+	float SA = Fo + (1.0f - Fo)*pow((1.0f - max(0.0f, dot(N, reflectColour))), 5.0f);
+
+	
+	//colour = texture(tex,reflectColour) * SA + texture(tex,refractColour) * (1.0f - SA);
+	colour = texture(tex,normal);
+	//gl_FragColor = min(material.x * colour + material.y * diffuse * colour, vec4(1.0));
+	gl_FragColor = colour;
 	gl_FragColor.a = colour.a;
 }

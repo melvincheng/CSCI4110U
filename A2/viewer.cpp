@@ -38,20 +38,18 @@ GLuint programCube;
 glm::mat4 projection;
 
 GLuint objVAO[2];
+
+GLuint tBuffer[2];
+
 int triangles;
 
 void init() {
     int vs;
     int fs;
 
-    vs = buildShader(GL_VERTEX_SHADER, "A2sphere.vs");
-    fs = buildShader(GL_FRAGMENT_SHADER, "A2sphere.fs");
-    programSphere = buildProgram(vs, fs, 0);
-    glUseProgram(programSphere);
-
     GLuint vbuffer[2];
     GLuint ibuffer[2];
-    GLuint tBuffer[2];
+    
     GLint vPositionSphere;
     GLint vNormalSphere;
     GLint vTexSphere;
@@ -73,6 +71,12 @@ void init() {
     GLfloat x;
     GLfloat y;
     GLfloat z;
+
+
+    vs = buildShader(GL_VERTEX_SHADER, "A2sphere.vs");
+    fs = buildShader(GL_FRAGMENT_SHADER, "A2sphere.fs");
+    programSphere = buildProgram(vs, fs, 0);
+    glUseProgram(programSphere);
 
     glGenVertexArrays(1, &objVAO[0]);
     glBindVertexArray(objVAO[0]);
@@ -104,10 +108,11 @@ void init() {
     }
 
     Cube *textureSphere;
-    textureSphere = loadCube("/home/melvincheng/Repositories/CSCI4110U/A2/VancouverConventionCentre");
+    textureSphere = loadCube("/home/penguin/Repositories/CSCI4110U/A2/VancouverConventionCentreScaled");
 
+    
     glGenTextures(1, &tBuffer[0]);
-    glActiveTexture(GL_TEXTURE0);
+    // glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, tBuffer[0]);
 
     for (i = 0; i < 6; i++) {
@@ -118,6 +123,7 @@ void init() {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+
 
     verts = nv / 3;
     nt = 2 * verts;
@@ -168,92 +174,44 @@ void init() {
     glGenVertexArrays(1, &objVAO[1]);
     glBindVertexArray(objVAO[1]);
 
-    GLfloat verticesCube[36][4] = {
-            // { -5.0, -5.0, -5.0, 1.0 }, //0      //0
-            // { -5.0, -5.0, 5.0, 1.0 }, //1       //1
-            // { -5.0, 5.0, -5.0, 1.0 }, //2       //2
-            // { -5.0, 5.0, 5.0, 1.0 }, //3        //3
+    GLfloat verticesCube[8][4] = {
+        { -5.0, -5.0, -5.0, 1.0 },      //0
+        { -5.0, -5.0, 5.0, 1.0 },       //1
+        { -5.0, 5.0, -5.0, 1.0 },       //2
+        { -5.0, 5.0, 5.0, 1.0 },        //3
 
-            // { 5.0, -5.0, -5.0, 1.0 }, //4       //4
-            // { 5.0, -5.0, 5.0, 1.0 }, //5        //5
-            // { 5.0, 5.0, -5.0, 1.0 }, //6        //6
-            // { 5.0, 5.0, 5.0, 1.0 }  //7         //7
-
-    { -5.0f, -5.0f, -5.0f, 1.0f }, //0
-    { -5.0f, -5.0f, 5.0f, 1.0f }, //1
-    { -5.0f, 5.0f, 5.0f, 1.0f }, //3
-
-    { -5.0f, -5.0f, -5.0f, 1.0f }, //0
-    { -5.0f, 5.0f, -5.0f, 1.0f }, //2
-    { -5.0f, 5.0f, 5.0f, 1.0f }, //3
-
-    { -5.0f, -5.0f, -5.0f, 1.0f }, //0
-    { 5.0f, -5.0f, -5.0f, 1.0f }, //4
-    { 5.0f, -5.0f, 5.0f, 1.0f }, //5
-
-    { -5.0f, -5.0f, -5.0f, 1.0f }, //0
-    { -5.0f, -5.0f, 5.0f, 1.0f }, //1
-    { 5.0f, -5.0f, 5.0f, 1.0f }, //5
-
-    { -5.0f, 5.0f, -5.0f, 1.0f }, //2    
-    { 5.0f, 5.0f, -5.0f, 1.0f }, //6
-    { 5.0f, 5.0f, 5.0f, 1.0f }, //7
-
-    { -5.0f, 5.0f, -5.0f, 1.0f }, //2
-    { -5.0f, 5.0f, 5.0f, 1.0f }, //3
-    { 5.0f, 5.0f, 5.0f, 1.0f }, //7
-
-    { -5.0f, -5.0f, -5.0f, 1.0f }, //0
-    { 5.0f, -5.0f, -5.0f, 1.0f }, //4
-    { 5.0f, 5.0f, -5.0f, 1.0f }, //6
-
-    { -5.0f, -5.0f, -5.0f, 1.0f }, //0
-    { -5.0f, 5.0f, -5.0f, 1.0f }, //2
-    { 5.0f, 5.0f, -5.0f, 1.0f }, //6
-
-    { -5.0f, -5.0f, 5.0f, 1.0f }, //1
-    { 5.0f, -5.0f, 5.0f, 1.0f }, //5
-    { 5.0f, 5.0f, 5.0f, 1.0f }, //7
-
-    { -5.0f, -5.0f, 5.0f, 1.0f }, //1
-    { -5.0f, 5.0f, 5.0f, 1.0f }, //3
-    { 5.0f, 5.0f, 5.0f, 1.0f }, //7
-
-    { 5.0f, -5.0f, -5.0f, 1.0f }, //4
-    { 5.0f, -5.0f, 5.0f, 1.0f }, //5
-    { 5.0f, 5.0f, 5.0f, 1.0f }, //7
-
-    { 5.0f, -5.0f, -5.0f, 1.0f }, //4
-    { 5.0f, 5.0f, -5.0f, 1.0f }, //6
-    { 5.0f, 5.0f, 5.0f, 1.0f } //7
+        { 5.0, -5.0, -5.0, 1.0 },       //4
+        { 5.0, -5.0, 5.0, 1.0 },        //5
+        { 5.0, 5.0, -5.0, 1.0 },        //6
+        { 5.0, 5.0, 5.0, 1.0 }          //7
 };
 
-    GLfloat normalsCube[8][3] = {
-            { -1.0, -1.0, -1.0 },           //0
-            { -1.0, -1.0, 1.0 },            //1
-            { -1.0, 1.0, -1.0 },            //2
-            { -1.0, 1.0, 1.0 },             //3
-            { 1.0, -1.0, -1.0 },            //4
-            { 1.0, -1.0, 1.0 },             //5
-            { 1.0, 1.0, -1.0 },             //6
-            { 1.0, 1.0, 1.0 }               //7
-    };
+    // GLfloat normalsCube[8][3] = {
+    //         { -1.0, -1.0, -1.0 },           //0
+    //         { -1.0, -1.0, 1.0 },            //1
+    //         { -1.0, 1.0, -1.0 },            //2
+    //         { -1.0, 1.0, 1.0 },             //3
+    //         { 1.0, -1.0, -1.0 },            //4
+    //         { 1.0, -1.0, 1.0 },             //5
+    //         { 1.0, 1.0, -1.0 },             //6
+    //         { 1.0, 1.0, 1.0 }               //7
+    // };
 
     GLuint indexesCube[36] = { 
-        // 0, 1, 3, 0, 2, 3,
-        // 0, 4, 5, 0, 1, 5,
-        // 2, 6, 7, 2, 3, 7,
-        // 0, 4, 6, 0, 2, 6,
-        // 1, 5, 7, 1, 3, 7,
-        // 4, 5, 7, 4, 6, 7 
-        0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35
+        0, 1, 3, 0, 2, 3,
+        0, 4, 5, 0, 1, 5,
+        2, 6, 7, 2, 3, 7,
+        0, 4, 6, 0, 2, 6,
+        1, 5, 7, 1, 3, 7,
+        4, 5, 7, 4, 6, 7 
     };
 
     Cube *textureCube;
-    textureCube = loadCube("/home/melvincheng/Repositories/CSCI4110U/A2/VancouverConventionCentre");
+    textureCube = loadCube("/home/penguin/Repositories/CSCI4110U/A2/VancouverConventionCentre");
+
 
     glGenTextures(1, &tBuffer[1]);
-    glActiveTexture(GL_TEXTURE0);
+    // glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, tBuffer[1]);
 
     for (i = 0; i < 6; i++) {
@@ -266,7 +224,8 @@ void init() {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 
-    GLfloat texCube[72][3] = {
+
+    // GLfloat texCube[8][3] = {
     //         { -1.0, -1.0, -1.0 },           //0
     //         { -1.0, -1.0, 1.0 },            //1
     //         { -1.0, 1.0, -1.0 },            //2
@@ -275,113 +234,14 @@ void init() {
     //         { 1.0, -1.0, 1.0 },             //5
     //         { 1.0, 1.0, -1.0 },             //6
     //         { 1.0, 1.0, 1.0 }               //7
-    // };
-    // { -1.0, -1.0, -1.0 },
-    // { -1.0, -1.0, 1.0 },
-    // { -1.0, 1.0, 1.0 },
-
-    // { -1.0, -1.0, -1.0 },
-    // { -1.0, 1.0, -1.0 },
-    // { -1.0, 1.0, 1.0 },
-
-    // { -1.0, -1.0, -1.0 },
-    // { 1.0, -1.0, -1.0 },
-    // { 1.0, -1.0, 1.0 },
-
-    // { -1.0, -1.0, -1.0 },
-    // { -1.0, -1.0, 1.0 },
-    // { 1.0, -1.0, 1.0 },
-
-    // { -1.0, 1.0, -1.0 },    
-    // { 1.0, 1.0, -1.0 },
-    // { 1.0, 1.0, 1.0 },
-
-    // { -1.0, 1.0, -1.0 },
-    // { -1.0, 1.0, 1.0 },
-    // { 1.0, 1.0, 1.0 },
-
-    // { -1.0, -1.0, -1.0 },
-    // { 1.0, -1.0, -1.0 },
-    // { 1.0, 1.0, -1.0 },
-
-    // { -1.0, -1.0, -1.0 },
-    // { -1.0, 1.0, -1.0 },
-    // { 1.0, 1.0, -1.0 },
-
-
-    // { -1.0, -1.0, 1.0 },
-    // { 1.0, -1.0, 1.0 },
-    // { 1.0, 1.0, 1.0 },
-
-    // { -1.0, -1.0, 1.0 },
-    // { -1.0, 1.0, 1.0 },
-    // { 1.0, 1.0, 1.0 },
-
-    // { 1.0, -1.0, -1.0 },
-    // { 1.0, -1.0, 1.0 },
-    // { 1.0, 1.0, 1.0 },
-
-    // { 1.0, -1.0, -1.0 },
-    // { 1.0, 1.0, -1.0 },
-    // { 1.0, 1.0, 1.0 }
-
-    { -1.0f, -1.0f, -1.0f},
-    { -1.0f, -1.0f, 1.0f},
-    { -1.0f, 1.0f, 1.0f},
-
-    { -1.0f, -1.0f, -1.0f},
-    { -1.0f, 1.0f, -1.0f},
-    { -1.0f, 1.0f, 1.0f},
-
-    { -1.0f, -1.0f, -1.0f},
-    { 1.0f, -1.0f, -1.0f},
-    { 1.0f, -1.0f, 1.0f},
-
-    { -1.0f, -1.0f, -1.0f},
-    { -1.0f, -1.0f, 1.0f},
-    { 1.0f, -1.0f, 1.0f},
-
-    { -1.0f, 1.0f, -1.0f},
-    { 1.0f, 1.0f, -1.0f},
-    { 1.0f, 1.0f, 1.0f},
-
-    { -1.0f, 1.0f, -1.0f},
-    { -1.0f, 1.0f, 1.0f},
-    { 1.0f, 1.0f, 1.0f},
-
-    { -1.0f, -1.0f, -1.0f},
-    { 1.0f, -1.0f, -1.0f},
-    { 1.0f, 1.0f, -1.0f},
-
-    { -1.0f, -1.0f, -1.0f},
-    { -1.0f, 1.0f, -1.0f},
-    { 1.0f, 1.0f, -1.0f},
-
-    { -1.0f, -1.0f, 1.0f},
-    { 1.0f, -1.0f, 1.0f},
-    { 1.0f, 1.0f, 1.0f},
-
-    { -1.0f, -1.0f, 1.0f},
-    { -1.0f, 1.0f, 1.0f},
-    { 1.0f, 1.0f, 1.0f},
-
-    { 1.0f, -1.0f, -1.0f},
-    { 1.0f, -1.0f, 1.0f},
-    { 1.0f, 1.0f, 1.0f},
-
-    { 1.0f, -1.0f, -1.0f},
-    { 1.0f, 1.0f, -1.0f},
-    { 1.0f, 1.0f, 1.0f}
-};
-
-
+    //     };
 
     glGenBuffers(1, &vbuffer[1]);
     glBindBuffer(GL_ARRAY_BUFFER, vbuffer[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCube) + sizeof(normalsCube) + sizeof(texCube), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCube) , NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verticesCube), verticesCube);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(verticesCube), sizeof(normalsCube), normalsCube);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(verticesCube) + sizeof(normalsCube), sizeof(texCube), texCube);
+    // glBufferSubData(GL_ARRAY_BUFFER, sizeof(verticesCube), sizeof(normalsCube), normalsCube);
+    // glBufferSubData(GL_ARRAY_BUFFER, sizeof(verticesCube) + sizeof(normalsCube), sizeof(texCube), texCube);
 
     glGenBuffers(1, &ibuffer[1]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer[1]);
@@ -392,13 +252,13 @@ void init() {
     glVertexAttribPointer(vPositionCube, 4, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(vPositionCube);
 
-    vNormalCube = glGetAttribLocation(programCube, "vNormal");
-    glVertexAttribPointer(vNormalCube, 3, GL_FLOAT, GL_FALSE, 0, (void*) sizeof(*verticesCube));
-    glEnableVertexAttribArray(vNormalCube);
+    // vNormalCube = glGetAttribLocation(programCube, "vNormal");
+    // glVertexAttribPointer(vNormalCube, 3, GL_FLOAT, GL_FALSE, 0, (void*) sizeof(*verticesCube));
+    // glEnableVertexAttribArray(vNormalCube);
 
-    vTexCube = glGetAttribLocation(programCube, "vTex");
-    glVertexAttribPointer(vTexCube, 3, GL_FLOAT, GL_FALSE, 0, (void*) (sizeof(*verticesCube) + sizeof(*normalsCube)));
-    glEnableVertexAttribArray(vTexCube);
+    // vTexCube = glGetAttribLocation(programCube, "vTex");
+    // glVertexAttribPointer(vTexCube, 3, GL_FLOAT, GL_FALSE, 0, (void*) (sizeof(*verticesCube) + sizeof(*texCube)));
+    // glEnableVertexAttribArray(vTexCube);
 }
 
 void changeSize(int w, int h) {
@@ -425,6 +285,7 @@ void displayFunc(void) {
     int eyeLoc;
     int lightLoc;
     int materialLoc;
+    int texLoc;
 
     if (wireframe){
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -433,9 +294,17 @@ void displayFunc(void) {
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    view = glm::lookAt(glm::vec3(eyex, eyey, eyez), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+
     glUseProgram(programSphere);
 
-    view = glm::lookAt(glm::vec3(eyex, eyey, eyez), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    texLoc = glGetUniformLocation(programSphere, "tex");
+    glUniform1i(texLoc, 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tBuffer[0]);
 
     viewLoc = glGetUniformLocation(programSphere, "modelView");
     glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
@@ -454,7 +323,17 @@ void displayFunc(void) {
     glBindVertexArray(objVAO[0]);
     glDrawElements(GL_TRIANGLES, 3*triangles, GL_UNSIGNED_INT, NULL);
 
+
+
     glUseProgram(programCube);
+
+    texLoc = glGetUniformLocation(programCube, "tex");
+    glUniform1i(texLoc, 1);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tBuffer[1]);
+
+
 
     viewLoc = glGetUniformLocation(programCube, "modelView");
     glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));

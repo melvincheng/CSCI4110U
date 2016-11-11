@@ -11,5 +11,5 @@ uniform vec4 material;
 
 void main(){
 
-	gl_FragColor = texture(tex, tc);
+	gl_FragColor = texture(tex, position);
 }

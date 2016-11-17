@@ -108,7 +108,7 @@ void init() {
     }
 
     Cube *textureSphere;
-    textureSphere = loadCube("/home/penguin/Repositories/CSCI4110U/A2/VancouverConventionCentreScaled");
+    textureSphere = loadCube("/home/melvincheng/Repositories/CSCI4110U/A2/VancouverConventionCentreScaled");
 
     
     glGenTextures(1, &tBuffer[0]);
@@ -207,7 +207,7 @@ void init() {
     };
 
     Cube *textureCube;
-    textureCube = loadCube("/home/penguin/Repositories/CSCI4110U/A2/VancouverConventionCentre");
+    textureCube = loadCube("/home/melvincheng/Repositories/CSCI4110U/A2/VancouverConventionCentre");
 
 
     glGenTextures(1, &tBuffer[1]);
@@ -333,8 +333,6 @@ void displayFunc(void) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, tBuffer[1]);
 
-
-
     viewLoc = glGetUniformLocation(programCube, "modelView");
     glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
     projLoc = glGetUniformLocation(programCube, "projection");
@@ -402,7 +400,7 @@ int main(int argc, char **argv) {
     if (error != GLEW_OK) {
         printf("Error starting GLEW: %s\n", glewGetErrorString(error));
         exit(0);
-    }
+    }   
 
     glutDisplayFunc(displayFunc);
     glutReshapeFunc(changeSize);

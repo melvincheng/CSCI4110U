@@ -17,11 +17,10 @@
 #include <math.h>
 #include <stdio.h>
 #include "Shaders.h"
-#include "tiny_obj_loader.h"
+#include <fstream>
 #include <iostream>
 
 #define CUBE
-// #define SPHERE
 
 float eyex, eyey, eyez;
 
@@ -35,19 +34,32 @@ glm::mat4 projection;
 GLuint objVAO;
 int triangles;
 
-#ifdef CUBE
-/*
- * This version of the init procedure produces the
- * data for drawing a cube.  The vertex and index
- * data are stored in constant arrays which are copied
- * into the buffers.  This code should be familiar
- * from class.
- */
 void init() {
     GLuint vbuffer;
     GLuint ibuffer;
     GLint vPosition;
     GLint vNormal;
+
+    int nv = 32;
+	int nn = 24;
+	int ni = 36;
+
+
+	int iter;
+	std::string var;
+	std::string constants;
+	std::string axiom;
+	std::string pattern;
+	float angle;
+
+	std::ifstream file;
+	file.open("input.txt");
+	file>>iter;
+	file>>var;
+	file>>constants;
+	file>>axiom;
+	file>>pattern;
+	file>>angle;
 
     glGenVertexArrays(1, &objVAO);
     glBindVertexArray(objVAO);
@@ -102,92 +114,6 @@ void init() {
     glEnableVertexAttribArray(vNormal);
 
 }
-#endif
-
-#ifdef SPHERE
-void init() {
-    GLuint vbuffer;
-    GLuint ibuffer;
-    GLint vPosition;
-    GLint vNormal;
-    GLfloat *vertices;
-    GLfloat *normals;
-    GLuint *indices;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    int nv;
-    int nn;
-    int ni;
-    int i;
-
-    glGenVertexArrays(1, &objVAO);
-    glBindVertexArray(objVAO);
-
-    /*  Load the obj file */
-
-    std::string err = tinyobj::LoadObj(shapes, materials, "sphere.obj", 0);
-
-    if (!err.empty()) {
-        std::cerr << err << std::endl;
-        return;
-    }
-
-    /*  Retrieve the vertex coordinate data */
-
-    nv = shapes[0].mesh.positions.size();
-    vertices = new GLfloat[nv];
-    for (i = 0; i<nv; i++) {
-        vertices[i] = shapes[0].mesh.positions[i];
-    }
-
-    /*  Retrieve the vertex normals */
-
-    nn = shapes[0].mesh.normals.size();
-    normals = new GLfloat[nn];
-    for (i = 0; i<nn; i++) {
-        normals[i] = shapes[0].mesh.normals[i];
-    }
-
-    /*  Retrieve the triangle indices */
-
-    ni = shapes[0].mesh.indices.size();
-    triangles = ni / 3;
-    indices = new GLuint[ni];
-    for (i = 0; i<ni; i++) {
-        indices[i] = shapes[0].mesh.indices[i];
-    }
-
-    /*
-    *  load the vertex coordinate data
-    */
-    glGenBuffers(1, &vbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-    glBufferData(GL_ARRAY_BUFFER, (nv + nn)*sizeof(GLfloat), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, nv*sizeof(GLfloat), vertices);
-    glBufferSubData(GL_ARRAY_BUFFER, nv*sizeof(GLfloat), nn*sizeof(GLfloat), normals);
-
-    /*
-    *  load the vertex indexes
-    */
-    glGenBuffers(1, &ibuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ni*sizeof(GLuint), indices, GL_STATIC_DRAW);
-
-    /*
-    *  link the vertex coordinates to the vPosition
-    *  variable in the vertex program.  Do the same
-    *  for the normal vectors.
-    */
-    glUseProgram(program);
-    vPosition = glGetAttribLocation(program, "vPosition");
-    glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(vPosition);
-    vNormal = glGetAttribLocation(program, "vNormal");
-    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)(nv*sizeof(*vertices)));
-    glEnableVertexAttribArray(vNormal);
-
-}
-#endif
 
 
 void changeSize(int w, int h) {
@@ -266,14 +192,8 @@ void keyboardFunc(unsigned char key, int x, int y) {
 }
 
 int main(int argc, char **argv) {
-    int fs;
+	int fs;
     int vs;
-    int user;
-
-    char vertexName[256];
-    char fragmentName[256];
-    char *fragment;
-    char *vertex;
 
     glutInit(&argc, argv);
     glutInitContextVersion(3, 3);
@@ -291,13 +211,6 @@ int main(int argc, char **argv) {
         exit(0);
     }
 
-    if (argc < 3) {
-        printf("usage: viwer vertex_suffix fragment_suffix\n");
-        exit(0);
-    }
-    vertex = argv[1];
-    fragment = argv[2];
-
     glutDisplayFunc(displayFunc);
     glutReshapeFunc(changeSize);
     glutKeyboardFunc(keyboardFunc);
@@ -305,12 +218,10 @@ int main(int argc, char **argv) {
     glEnable(GL_DEPTH_TEST);
     glClearColor(1.0, 1.0, 1.0, 1.0);
 
-    sprintf(vertexName, "lab4%s.vs", vertex);
-    vs = buildShader(GL_VERTEX_SHADER, vertexName);
-    sprintf(fragmentName, "lab4%s.fs", fragment);
-    fs = buildShader(GL_FRAGMENT_SHADER, fragmentName);
+    vs = buildShader(GL_VERTEX_SHADER, "final.vs");
+    fs = buildShader(GL_FRAGMENT_SHADER, "final.fs");
     program = buildProgram(vs, fs, 0);
-    dumpProgram(program, "Lab 2 shader program");
+    dumpProgram(program, "Shader program");
     init();
 
     eyex = 0.0;

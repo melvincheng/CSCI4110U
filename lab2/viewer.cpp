@@ -260,6 +260,7 @@ int main(int argc, char **argv) {
     int user;
 
     glutInit(&argc, argv);
+    glutInitContextVersion(3, 3);
 
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowPosition(100, 100);
